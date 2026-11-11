@@ -1,0 +1,32 @@
+{
+  "name": "growthmark-crm",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "preview": "vite preview",
+    "test:security": "node scripts/run-security-tests.mjs",
+    "emulators": "node scripts/run-security-tests.mjs --start"
+  },
+  "dependencies": {
+    "firebase": "^13.2.0",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "firebase-tools": "^15.35.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.0"
+  }
+}

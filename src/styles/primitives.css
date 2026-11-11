@@ -1,0 +1,37 @@
+/* Foundations for future forms, tables, dialogs and feature screens. */
+.surface { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.field { display: grid; gap: var(--space-2); font-size: 14px; }
+.field-input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--card); color: var(--text); font: inherit; }
+.field-input::placeholder { color: var(--muted); opacity: 1; }
+.field-input[aria-invalid="true"] { border-color: var(--danger-text); }
+.field-input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.field-help { color: var(--muted); font-size: 13px; }
+.field-error { color: var(--danger-text); font-size: 13px; }
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th, .data-table td { padding: var(--space-4); text-align: left; border-bottom: 1px solid var(--border); }
+.data-table th { color: var(--muted); font-weight: 600; }
+.dialog-surface { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-6); max-width: min(560px, calc(100vw - 32px)); }
+.dialog-surface::backdrop { background: #0009; }
+.empty-state { text-align: center; padding: var(--space-8); color: var(--muted); }
+.skip-link { position: fixed; top: 8px; left: 8px; transform: translateY(-150%); z-index: 100; padding: 12px; background: var(--card); color: var(--text); border: 2px solid var(--accent); border-radius: 8px; }
+.skip-link:focus { transform: translateY(0); }
+.sidebar { color: var(--sidebar-text); --muted: var(--sidebar-muted); --border: var(--sidebar-border); --bg: var(--sidebar-surface); --hover: var(--sidebar-surface); --card: var(--sidebar-surface); --text: var(--sidebar-text); --soft: var(--sidebar-active); --accent: #34D399; --accent-text: #34D399; overflow-y: auto; }
+.sidebar .nav-item:hover { background: var(--sidebar-active); }
+.sidebar .workspace-picker { margin-right: 0; }
+.stat-card, .panel { border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.primary-button { background: var(--button-bg); color: var(--button-text); min-height: 44px; }
+.icon-button { min-width: 44px; min-height: 44px; }
+.setup-row strong { font-size: 13px; }
+.setup-row p, .stat-card p { font-size: 12px; }
+.subtitle, .welcome-card p { font-size: 14px; }
+.sidebar-note p { font-size: 12px; }
+@media (max-width:760px) { .sidebar { width: min(280px, 88vw); } .sidebar .workspace-picker { margin-top: 74px; } }
+/* Keep decoration away from copy when the persistent sidebar narrows the content. */
+@media (max-width:1150px) {
+  .welcome-art { display: none; }
+  .welcome-copy { max-width: 100%; }
+}
+@media (min-width:761px) and (max-width:1000px) {
+  .page-heading { flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+}

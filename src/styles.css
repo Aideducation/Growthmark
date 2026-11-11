@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/layout.css";
+@import "./styles/primitives.css";
+@import "./styles/auth.css";
+@custom-variant dark (&:where(.dark, .dark *));

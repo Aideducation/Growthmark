@@ -1,0 +1,32 @@
+.agency-invoices .agency-form-section { border-top: 1px solid var(--border); padding: 22px 0; }
+.agency-invoices .agency-images { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px; }
+.agency-invoices .agency-images img { display:block;width:100%;height:110px;object-fit:contain;background:white;border-radius:8px;margin:12px 0; }
+.agency-invoices .agency-images input { max-width:100%; }
+.agency-invoices .agency-preview { border:1px solid #e5e7eb;border-top:4px solid;padding:24px;border-radius:12px;margin:12px 0; }
+.agency-invoices .invoice-summary { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:24px; }
+.agency-invoices .invoice-summary article { padding:20px; }
+.agency-invoices .invoice-summary strong { display:block;font-size:1.4rem;margin-top:6px; }
+.agency-invoices .invoice-filters { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px; }
+.agency-invoices .invoice-editor-section { padding:20px 0;border-top:1px solid #e5e7eb; }
+.agency-invoices .invoice-line-editor { padding:18px;border:1px solid #e5e7eb;border-radius:12px;margin:12px 0; }
+.agency-invoices .invoice-line-editor .form-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.agency-invoices .invoice-preview-scroll { overflow:auto;padding:20px;background:#e5e7eb;border-radius:12px; }
+.agency-invoices .invoice-paper { width:100%;min-width:600px;max-width:794px;min-height:1050px;margin:auto;background:#fff;color:#171c1b;padding:44px;font:13px/1.6 Arial,sans-serif;border-top:6px solid var(--invoice-brand,#10b981); }
+.agency-invoices .invoice-paper h2,.agency-invoices .invoice-paper h3,.agency-invoices .invoice-paper p { color:inherit; }
+.agency-invoices .invoice-paper h2 { font-size:26px;margin:0; }
+.agency-invoices .invoice-paper .invoice-branding { display:flex;justify-content:space-between;align-items:start;gap:20px; }
+.agency-invoices .invoice-paper img { max-width:140px;max-height:90px;object-fit:contain; }
+.agency-invoices .invoice-paper .invoice-parties { display:grid;grid-template-columns:1fr 1fr;gap:32px;margin:28px 0; }
+.agency-invoices .invoice-paper table { width:100%;border-collapse:collapse;font-size:12px; }
+.agency-invoices .invoice-paper th { background:#171c1b;color:white;text-align:left;padding:10px; }
+.agency-invoices .invoice-paper td { padding:10px;border-bottom:1px solid #e5e7eb;vertical-align:top;overflow-wrap:anywhere; }
+.agency-invoices .invoice-paper .invoice-totals { margin:24px 0 24px auto;max-width:340px; }
+.agency-invoices .invoice-paper .invoice-totals p { display:flex;justify-content:space-between;gap:12px; }
+.agency-invoices .invoice-paper .invoice-total { font-size:18px;border-top:2px solid #171c1b;padding-top:10px; }
+.agency-invoices .invoice-paper .invoice-copy { white-space:pre-wrap;overflow-wrap:anywhere; }
+.agency-invoices .invoice-paper footer { border-top:1px solid #e5e7eb;margin-top:28px;padding-top:16px;color:#6b7280; }
+@media(max-width:800px) { .agency-invoices .invoice-filters,.agency-invoices .invoice-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .agency-invoices .invoice-line-editor .form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:480px) { .agency-invoices .agency-images,.agency-invoices .invoice-filters,.agency-invoices .invoice-line-editor .form-grid { grid-template-columns:1fr; } .agency-invoices .invoice-summary article { padding:12px; } .agency-invoices .invoice-preview-scroll { padding:8px; } }
+
+.agency-invoices .invoice-preview-hint { display:none; }
+@media(max-width:650px) { .agency-invoices .invoice-preview-hint { display:block; } }

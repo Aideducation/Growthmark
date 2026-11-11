@@ -1,0 +1,50 @@
+/* Shared semantic tokens. Components consume roles rather than theme-specific colours. */
+:root {
+  --bg: #F5F7F5;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --text: #171C1B;
+  --muted: #6B7280;
+  --accent: #10B981;
+  --accent-text: #047857;
+  --soft: #ECFDF5;
+  --hover: #F0F4F1;
+  --sidebar: #171C1B;
+  --sidebar-text: #F9FAFB;
+  --sidebar-muted: #A1A1AA;
+  --sidebar-border: #37423D;
+  --sidebar-surface: #1F2925;
+  --sidebar-active: #203B30;
+  --button-bg: #10B981;
+  --button-text: #092D21;
+  --danger-text: #B91C1C;
+  --danger-bg: #FEF2F2;
+  --warning-text: #92400E;
+  --warning-bg: #FFFBEB;
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --shadow-card: 0 2px 6px #00000005;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  color-scheme: light;
+}
+:root.dark {
+  --bg: #111615;
+  --card: #1F2925;
+  --border: #37423D;
+  --text: #F9FAFB;
+  --muted: #A1A1AA;
+  --accent: #34D399;
+  --accent-text: #34D399;
+  --soft: #203B30;
+  --hover: #28352F;
+  --danger-text: #FCA5A5;
+  --danger-bg: #3A2020;
+  --warning-text: #FDE68A;
+  --warning-bg: #352D1D;
+  color-scheme: dark;
+}

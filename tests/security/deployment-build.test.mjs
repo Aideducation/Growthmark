@@ -1,0 +1,8 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { validateDeploymentEnvironment } from '../../scripts/build-vercel.mjs'
+
+const configuration = () => ({ VITE_USE_FIREBASE_EMULATORS:'false', VITE_FIREBASE_PROJECT_ID:'growthmark-c0e9c', VITE_FIREBASE_API_KEY:'browser-public-test-key', VITE_FIREBASE_AUTH_DOMAIN:'growthmark-c0e9c.firebaseapp.com', VITE_FIREBASE_STORAGE_BUCKET:'growthmark-c0e9c.firebasestorage.app', VITE_FIREBASE_MESSAGING_SENDER_ID:'123', VITE_FIREBASE_APP_ID:'web-test-app' })
+test('deployment guard accepts explicit real mode and the approved project',()=>assert.doesNotThrow(()=>validateDeploymentEnvironment(configuration())))
+test('deployment guard rejects omitted/emulator flags and another project',()=>{for(const flag of [undefined,'','true','FALSE'])assert.throws(()=>validateDeploymentEnvironment({...configuration(),VITE_USE_FIREBASE_EMULATORS:flag}));assert.throws(()=>validateDeploymentEnvironment({...configuration(),VITE_FIREBASE_PROJECT_ID:'another-project'}))})
+test('deployment guard rejects missing config, localhost and public-prefixed secrets',()=>{const missing=configuration();delete missing.VITE_FIREBASE_APP_ID;assert.throws(()=>validateDeploymentEnvironment(missing));assert.throws(()=>validateDeploymentEnvironment({...configuration(),VITE_FIREBASE_AUTH_DOMAIN:'localhost'}));assert.throws(()=>validateDeploymentEnvironment({...configuration(),VITE_PRIVATE_KEY:'never-publish'}));assert.throws(()=>validateDeploymentEnvironment({...configuration(),VITE_FIREBASE_API_KEY:'your-web-api-key'}))})

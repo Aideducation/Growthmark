@@ -1,0 +1,69 @@
+--- firestore.rules (unchanged)
++++ firestore.agency-invoice.proposed.rules (proposal only)
+@@ -155,25 +155,62 @@
+             || (settingId == 'payment' && validPaymentSettings(request.resource.data))
+             || (settingId == 'invoice' && validInvoiceSettings(request.resource.data)));
+       }
++
++      // PROPOSAL ONLY: bounded private draft content. JSON is owner-authored, never trusted
++      // for issuance, payment verification, counters, permissions or authoritative totals.
++      function advancedEditable(invoiceId) {
++        let path = /databases/$(database)/documents/workspaces/$(wid)/invoices/$(invoiceId)/configuration/snapshot;
++        return !exists(path) || getAfter(path).data.revision == get(path).data.revision + 1;
++      }
++      function snapshotHeaderCommitted(invoiceId) {
++        let path = /databases/$(database)/documents/workspaces/$(wid)/invoices/$(invoiceId);
++        return getAfter(path).data.state == 'draft'
++          && (!exists(path) ? getAfter(path).data.revision == 1
++            : get(path).data.state == 'draft'
++              && getAfter(path).data.revision == get(path).data.revision + 1);
++      }
++      match /settings/agency {
++        allow get: if owner(wid);
++        allow create, update: if owner(wid) && metadata(request.resource.data, wid)
++          && shape(request.resource.data, ['profileJson'])
++          && text(request.resource.data.profileJson, 150000);
++        allow list, delete: if false;
++      }
++      match /invoices/{invoiceId}/configuration/snapshot {
++        allow get: if owner(wid);
++        allow list, delete: if false;
++        allow create, update: if owner(wid) && metadata(request.resource.data, wid)
++          && shape(request.resource.data, ['agencyJson','clientJson','contentJson'])
++          && text(request.resource.data.agencyJson, 150000)
++          && text(request.resource.data.clientJson, 10000)
++          && text(request.resource.data.contentJson, 220000)
++          && snapshotHeaderCommitted(invoiceId)
++          && (request.method == 'create' || (
++            resource.data.agencyJson == request.resource.data.agencyJson
++            && resource.data.clientJson == request.resource.data.clientJson
++            && get(/databases/$(database)/documents/workspaces/$(wid)/invoices/$(invoiceId)).data.state == 'draft'));
++      }
++
+       match /{kind}/{recordId} {
+         allow get, list: if owner(wid) && readable(kind);
+-        allow create, update: if owner(wid) && metadata(request.resource.data, wid) && editable(kind, request.resource.data, wid);
++        allow create, update: if owner(wid) && metadata(request.resource.data, wid) && editable(kind, request.resource.data, wid) && (kind != 'invoices' || advancedEditable(recordId));
+         allow delete: if false;
+         match /items/{itemId} {
+           function draftParent() {
+             return kind in ['quotations', 'invoices']
+-              && get(/databases/$(database)/documents/workspaces/$(wid)/$(kind)/$(recordId)).data.state == 'draft'
++              && ((kind == 'invoices' && !exists(/databases/$(database)/documents/workspaces/$(wid)/$(kind)/$(recordId)))
++                || get(/databases/$(database)/documents/workspaces/$(wid)/$(kind)/$(recordId)).data.state == 'draft')
+               && getAfter(/databases/$(database)/documents/workspaces/$(wid)/$(kind)/$(recordId)).data.state == 'draft';
+           }
+           allow get, list: if owner(wid) && kind in ['quotations', 'invoices'];
+-          allow create, update: if owner(wid) && draftParent() && metadata(request.resource.data, wid)
++          allow create, update: if owner(wid) && draftParent() && (kind != 'invoices' || advancedEditable(recordId)) && metadata(request.resource.data, wid)
+             && shape(request.resource.data, ['description', 'quantityMilli', 'unitPriceMinor', 'taxRateBps', 'discountBps'])
+             && text(request.resource.data.description, 2000) && request.resource.data.description.size() > 0
+             && request.resource.data.quantityMilli is int && request.resource.data.quantityMilli > 0 && request.resource.data.quantityMilli <= 1000000000
+             && request.resource.data.unitPriceMinor is int && request.resource.data.unitPriceMinor >= 0 && request.resource.data.unitPriceMinor <= 1000000000000
+             && request.resource.data.taxRateBps is int && request.resource.data.taxRateBps >= 0 && request.resource.data.taxRateBps <= 10000
+             && request.resource.data.discountBps is int && request.resource.data.discountBps >= 0 && request.resource.data.discountBps <= 10000;
+-          allow delete: if owner(wid) && draftParent();
++          allow delete: if owner(wid) && draftParent() && (kind != 'invoices' || advancedEditable(recordId));
+         }
+       }
+       match /payments/{paymentId} {
