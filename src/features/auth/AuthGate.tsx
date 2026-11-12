@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ArrowRight, ChartNoAxesCombined, LoaderCircle, Mail, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeToggle'
 import { auth, db, isEmulatorMode } from '../../services/firebase'
 import { useAuth } from './auth-context'
-import { friendlyAuthError, loginWithEmail, loginWithGoogle, refreshVerification, registerWithEmail, resendVerification, resetPassword } from './auth-api'
+import { friendlyAuthError, loginWithEmail, refreshVerification, registerWithEmail, resendVerification, resetPassword } from './auth-api'
 import { completeOnboarding } from './workspace-service'
 
 function AuthFrame({ children }: { children: ReactNode }) {
@@ -20,21 +20,6 @@ function SignedOut() {
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login')
   const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [fullName, setFullName] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
-  const [googlePending, setGooglePending] = useState(false)
-  const [googleAvailable, setGoogleAvailable] = useState(!isEmulatorMode)
-  useEffect(() => {
-    if (!isEmulatorMode) return
-    let active = true
-    async function checkEmulator() {
-      try {
-        const response = await fetch('http://127.0.0.1:9099/', { signal: AbortSignal.timeout(3000) })
-        if (active) setGoogleAvailable(response.ok)
-      } catch { if (active) setGoogleAvailable(false) }
-    }
-    void checkEmulator()
-    const timer = window.setInterval(() => { void checkEmulator() }, 10000)
-    return () => { active = false; window.clearInterval(timer) }
-  }, [])
   function changeMode(next: typeof mode) { setMode(next); setPassword(''); setError(''); setMessage('') }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return
@@ -46,18 +31,11 @@ function SignedOut() {
     } catch (reason) { setError(friendlyAuthError(reason)) }
     finally { setPassword(''); setBusy(false) }
   }
-  async function google() {
-    if (busy) return
-    setBusy(true); setGooglePending(true); setError(''); setMessage('')
-    try { await loginWithGoogle(auth) } catch (reason) { setError(friendlyAuthError(reason)) } finally { setBusy(false); setGooglePending(false) }
-  }
   return <AuthFrame><span className="auth-step">YOUR PRIVATE WORKSPACE</span><h2>{mode === 'register' ? 'Start with GrowthMark' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h2><p className="auth-description">{mode === 'register' ? 'Create your freelancer account. Your clients won’t need accounts.' : mode === 'reset' ? 'Enter your account email to request a reset link.' : 'Sign in to pick up where you left off.'}</p><Notice error={error} message={message}/><form onSubmit={submit} aria-busy={busy}><fieldset disabled={busy} className="auth-fields">
     {mode === 'register' && <label className="field">Full name<input className="field-input" autoComplete="name" value={fullName} onChange={event => setFullName(event.target.value)} maxLength={160} required/></label>}
     <label className="field">Email address<input className="field-input" type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} maxLength={254} required/></label>
     {mode !== 'reset' && <label className="field">Password<input className="field-input" type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={event => setPassword(event.target.value)} minLength={mode === 'register' ? 8 : undefined} required/>{mode === 'register' && <span className="field-help">Use at least 8 characters.</span>}</label>}
     <Submit busy={busy}>{mode === 'register' ? 'Create account' : mode === 'reset' ? 'Send reset link' : 'Sign in'}</Submit></fieldset></form>
-    {mode !== 'reset' && <><div className="auth-divider"><span/>or<span/></div><button className="secondary-button" type="button" onClick={() => { void google() }} disabled={busy || !googleAvailable}>Continue with Google</button><p className="field-help" role="status">{!isEmulatorMode ? 'Sign in securely with your Google account.' : googleAvailable ? 'Local test sign-in only. Firebase opens an emulator account chooser; this does not sign in to your real Google account.' : 'Local authentication is unavailable or still being checked. Start the Firebase emulators with npm.cmd run emulators. This page checks again automatically.'}</p></>}
-    {googlePending && <div className="google-pending"><p className="field-help" role="status">Complete sign-in in the popup. If no window appears, open this preview in Chrome or Edge, or use email and password.</p><button className="text-button" type="button" onClick={() => window.location.reload()}>Cancel Google sign-in</button></div>}
     <div className="auth-links">{mode === 'login' ? <><button disabled={busy} onClick={() => changeMode('reset')}>Forgot password?</button><span>New to GrowthMark? <button disabled={busy} onClick={() => changeMode('register')}>Create an account</button></span></> : <button disabled={busy} onClick={() => changeMode('login')}>Back to sign in</button>}</div></AuthFrame>
 }
 function Verification() {

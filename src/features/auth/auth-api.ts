@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, GoogleAuthProvider, reload, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, reload, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
 import type { Auth } from 'firebase/auth'
 import type { RegistrationInput } from './contracts.ts'
 import { isSelectedLiveAuth } from '../../services/firebase-mode.ts'
@@ -25,12 +25,6 @@ export async function registerWithEmail(auth: Auth, input: RegistrationInput) {
 export async function loginWithEmail(auth: Auth, email: string, password: string) {
   requireLocalAuth(auth)
   return signInWithEmailAndPassword(auth, email.trim(), password)
-}
-export async function loginWithGoogle(auth: Auth) {
-  requireLocalAuth(auth)
-  const provider = new GoogleAuthProvider()
-  provider.setCustomParameters({ prompt: 'select_account' })
-  return signInWithPopup(auth, provider)
 }
 export async function resendVerification(auth: Auth) {
   requireLocalAuth(auth)
@@ -65,14 +59,8 @@ export function friendlyAuthError(error: unknown): string {
     'auth/weak-password': 'Choose a stronger password with at least 8 characters.',
     'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
     'auth/network-request-failed': 'Cannot reach authentication. Check your internet connection, or start the emulators if emulator mode is selected.',
-    'auth/popup-closed-by-user': 'The sign-in window was closed. You can try again.',
-    'auth/popup-blocked': 'Allow the sign-in popup in your browser, then try again.',
-    'auth/cancelled-popup-request': 'Finish the other sign-in window or try again.',
     'auth/account-exists-with-different-credential': 'This email uses another sign-in method. Sign in with that method first.',
     'auth/operation-not-allowed': 'This sign-in method is disabled in Firebase Authentication. Check Sign-in method in the selected Firebase project.',
-    'auth/unauthorized-domain': 'This browser domain is not authorized for Firebase sign-in. Check Authentication → Settings → Authorized domains for localhost or 127.0.0.1, matching the address you opened.',
-    'auth/auth-domain-config-required': 'The Firebase authentication domain is missing. Check VITE_FIREBASE_AUTH_DOMAIN and restart the development server.',
-    'auth/operation-not-supported-in-this-environment': 'Google popup sign-in is not supported in this browser. Open the local preview in Chrome or Edge.',
     'auth/user-disabled': 'This account is disabled.',
     'auth/web-storage-unsupported': 'This browser cannot save your login session. Allow local browser storage or try another browser.',
     'permission-denied': 'Workspace access was denied. Your account must be verified and the selected database rules must permit your own workspace. No data was changed by this request.',
