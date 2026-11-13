@@ -2,12 +2,14 @@ import { createUserWithEmailAndPassword, reload, sendEmailVerification, sendPass
 import type { Auth } from 'firebase/auth'
 import type { RegistrationInput } from './contracts.ts'
 import { isSelectedLiveAuth } from '../../services/firebase-mode.ts'
+import { invoicePreviewPorts, invoicePreviewProject } from '../../services/invoice-preview-mode.ts'
 
 /** Retained name for compatibility: allow configured live Auth or a known local emulator. */
 export function requireLocalAuth(auth: Auth) {
   if (isSelectedLiveAuth(auth)) return
   const port = auth.app.options.projectId === 'demo-growthmark-security' ? 9099
-    : auth.app.options.projectId === 'demo-growthmark-security-tests' ? 9199 : null
+    : auth.app.options.projectId === 'demo-growthmark-security-tests' ? 9199
+    : auth.app.options.projectId === invoicePreviewProject ? invoicePreviewPorts.auth : null
   if (!port || auth.emulatorConfig?.host !== '127.0.0.1' || auth.emulatorConfig?.port !== port) {
     throw new Error('Live authentication is disabled. Start the local Firebase emulators.')
   }

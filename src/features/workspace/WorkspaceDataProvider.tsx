@@ -23,7 +23,7 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     const fail = (issue: unknown) => { if (alive) { setError(friendlyAuthError(issue)); setRecords(empty()); setItems({}) } }
     const stops = entities.map(kind => onSnapshot(query(collection(db, 'workspaces', uid, kind), orderBy('createdAt', 'desc'), limit(cap)), snapshot => {
       if (!alive) return
-      setRecords(current => ({ ...current, [kind]: snapshot.docs.map(document => ({ ...document.data(), id: document.id } as RecordRow)) })); ready(kind)
+      setRecords(current => ({ ...current, [kind]: snapshot.docs.map(document => ({ ...document.data(), id: document.id, ...(kind === 'invoices' ? { _pendingWrites: document.metadata.hasPendingWrites } : {}) } as RecordRow)) })); ready(kind)
     }, fail))
     for (const kind of ['business', 'payment', 'invoice'] as const) stops.push(onSnapshot(doc(db, 'workspaces', uid, 'settings', kind), snapshot => {
       if (!alive) return

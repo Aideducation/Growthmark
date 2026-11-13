@@ -4,12 +4,12 @@ export const agencySections: Record<string, Record<string, string>> = {
   'Business identity': { name: 'Agency name', ownerName: 'Owner name', businessType: 'Business type', email: 'Business email', phone: 'Phone', whatsapp: 'WhatsApp', website: 'Website', address: 'Street address', city: 'City', state: 'State', postalCode: 'PIN code', country: 'Country', pan: 'PAN (optional)', gstin: 'GSTIN (optional)' },
   'GST preferences': { gstEnabled: 'GST enabled', defaultGst: 'Preferred GST rate (%)', priceMode: 'Pricing', gstMode: 'GST breakdown' },
   'Payment information': { upiEnabled: 'Enable UPI', upiId: 'UPI ID', upiHolder: 'UPI account holder', bankEnabled: 'Enable bank transfer', bankHolder: 'Bank account holder', bankName: 'Bank name', accountNumber: 'Account number', ifsc: 'IFSC code', branch: 'Branch', cashEnabled: 'Accept cash', otherEnabled: 'Accept another method', otherMethod: 'Other method name', instructions: 'Payment instructions' },
-  'Invoice branding': { prefix: 'Invoice prefix (reserved for issuance)', currency: 'Preferred invoice currency', dueDays: 'Default due period (days)', paymentTerms: 'Payment terms', footer: 'Footer', notes: 'Default notes', terms: 'Terms and conditions', brandColor: 'Brand colour', signatureName: 'Authorized signature name' },
+  'Invoice branding': { prefix: 'Invoice reference prefix', currency: 'Preferred invoice currency', dueDays: 'Default due period (days)', paymentTerms: 'Payment terms', footer: 'Footer', notes: 'Default notes', terms: 'Terms and conditions', brandColor: 'Brand colour', signatureName: 'Authorized signature name' },
 }
 export type Agency = Record<string, string>
 export const agencyKeys = [...Object.values(agencySections).flatMap(section => Object.keys(section)), 'logo', 'qr', 'signature']
 export function defaultAgency(): Agency {
-  return { ...Object.fromEntries(agencyKeys.map(key => [key, ''])), gstEnabled: 'false', defaultGst: '0', priceMode: 'exclusive', gstMode: 'split', upiEnabled: 'false', bankEnabled: 'false', cashEnabled: 'false', otherEnabled: 'false', prefix: 'GM-INV', currency: 'INR', dueDays: '14', brandColor: '#10B981', country: 'India' }
+  return { ...Object.fromEntries(agencyKeys.map(key => [key, ''])), gstEnabled: 'false', defaultGst: '0', priceMode: 'exclusive', gstMode: 'split', upiEnabled: 'false', bankEnabled: 'false', cashEnabled: 'false', otherEnabled: 'false', prefix: 'INV', currency: 'INR', dueDays: '14', brandColor: '#10B981', country: 'India' }
 }
 export function validateAgency(value: unknown): Agency {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid agency profile.')
@@ -71,7 +71,7 @@ export function calculateInvoice(draft: InvoiceDraft) {
   const charges = scaledInteger(draft.charges || '0'), tax = sum('tax')
   return { lines, subtotal: sum('gross'), itemDiscount: sum('itemDiscount'), overallDiscount: safe(overall), taxable: sum('taxable'), tax, cgst: draft.gstMode === 'split' ? Math.floor(tax / 2) : 0, sgst: draft.gstMode === 'split' ? tax - Math.floor(tax / 2) : 0, igst: draft.gstMode === 'igst' ? tax : 0, charges, total: safe(BigInt(sum('total')) + BigInt(charges)) }
 }
-export function validateDraft(value: unknown): InvoiceDraft {
+export function validateDraft(value: unknown, paymentAgency?: Agency): InvoiceDraft {
   if (!value || typeof value !== 'object') throw new Error('Invalid invoice.')
   const d = value as InvoiceDraft
   if (Object.keys(d).sort().join() !== ['version','agency','client','title','date','due','currency','priceMode','gstMode','gstEnabled','discountKind','discount','charges','notes','terms','methods','lines'].sort().join()) throw new Error('Invoice contains unexpected fields.')
@@ -83,8 +83,9 @@ export function validateDraft(value: unknown): InvoiceDraft {
   if (!d.title.trim() || !d.client.name.trim() || !['INR', 'USD', 'EUR', 'GBP'].includes(d.currency)) throw new Error('Enter an invoice title, client and supported currency.')
   for (const date of [d.date, d.due].filter(Boolean)) if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || new Date(date + 'T00:00:00Z').toISOString().slice(0, 10) !== date) throw new Error('Invalid invoice date.')
   if (!d.date || d.due && d.due < d.date) throw new Error('Due date cannot precede the invoice date.')
-  if (!Array.isArray(d.methods) || new Set(d.methods).size !== d.methods.length || d.methods.some(method => !['upi', 'bank', 'cash', 'other'].includes(method) || d.agency[`${method}Enabled`] !== 'true')) throw new Error('Select only enabled agency payment methods.')
-  if (d.methods.includes('upi') && !d.agency.upiId || d.methods.includes('bank') && (!d.agency.bankName || !d.agency.accountNumber || !d.agency.bankHolder || !d.agency.ifsc)) throw new Error('Complete payment details before displaying that method.')
+  const payment = paymentAgency ? validateAgency(paymentAgency) : d.agency
+  if (!Array.isArray(d.methods) || new Set(d.methods).size !== d.methods.length || d.methods.some(method => !['upi', 'bank', 'cash', 'other'].includes(method) || payment[`${method}Enabled`] !== 'true')) throw new Error('Select only enabled agency payment methods.')
+  if (d.methods.includes('upi') && !payment.upiId || d.methods.includes('bank') && (!payment.bankName || !payment.accountNumber || !payment.bankHolder || !payment.ifsc)) throw new Error('Complete payment details before displaying that method.')
   if (!d.lines.length || new Set(d.lines.map(line => line.id)).size !== d.lines.length) throw new Error('Add at least one unique invoice item.')
   for (const line of d.lines) {
     if (!line || Object.keys(line).sort().join() !== ['id','name','description','quantity','unit','rate','discountKind','discount','gst'].sort().join() || Object.values(line).some(value => typeof value !== 'string' || value.length > 2000) || !/^[A-Za-z0-9_-]{1,100}$/.test(line.id) || !line.name.trim()) throw new Error('Check service names and invoice items.')

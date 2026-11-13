@@ -29,3 +29,11 @@ credentials.json
 *.key
 *.p12
 *.pfx
+.dev.vars*
+.wrangler/
+.release-private/
+playwright-report/
+test-results/
+.aws/
+.codex/
+.agents/

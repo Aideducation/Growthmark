@@ -26,7 +26,7 @@ const descriptions: Record<Entity, string> = {
   invoices: 'Prepare draft invoices. Issuance, official numbers and public links remain disabled.',
   payments: 'A private register of owner-recorded collections. Entries are not independently verified.',
 }
-export function RecordPage({ kind }: { kind: Entity }) {
+export function RecordPage({ kind, allowCreate = true }: { kind: Entity; allowCreate?: boolean }) {
   const { records, items } = useWorkspaceData(), { session } = useAuth()
   const currency = session.status === 'ready' ? session.workspace.currency : 'INR'
   const [search, setSearch] = useState(''), [status, setStatus] = useState('all'), [editor, setEditor] = useState<{ row: RecordRow | null } | null>(null)
@@ -48,7 +48,7 @@ export function RecordPage({ kind }: { kind: Entity }) {
     catch (issue) { setError(friendlyAuthError(issue)) } finally { setBusy(false) }
   }
   if (detail && draft) return <main tabIndex={-1} id="workspace-content"><button className="back-button" onClick={() => setDetailId(null)}><ArrowLeft size={16}/>All {titles[kind].toLowerCase()}</button><DraftDetails kind={kind} record={detail} onEdit={() => setEditor({ row: detail })}/>{editor && <RecordEditor kind={kind} row={editor.row} onClose={() => setEditor(null)} onSaved={() => { setEditor(null); setMessage('Draft details saved.') }}/>}</main>
-  return <main tabIndex={-1} id="workspace-content"><PageHeader title={titles[kind]} description={descriptions[kind]} action={<button className="primary-button page-action" onClick={() => { setError(''); setEditor({ row: null }) }} disabled={requiresClient && !records.clients.length}><Plus size={17}/>Add {single[kind]}</button>}/>
+  return <main tabIndex={-1} id="workspace-content"><PageHeader title={titles[kind]} description={descriptions[kind]} action={allowCreate && kind !== 'invoices' ? <button className="primary-button page-action" onClick={() => { setError(''); setEditor({ row: null }) }} disabled={requiresClient && !records.clients.length}><Plus size={17}/>Add {single[kind]}</button> : undefined}/>
     {message && <p className="auth-success" role="status">{message}</p>}{error && <p className="auth-error" role="alert">{error}</p>}
     {requiresClient && !records.clients.length && <div className="info-banner">Start by <a href="#clients">adding a client</a> before creating {titles[kind].toLowerCase()}.</div>}
     {kind === 'payments' && <div className="info-banner">Record any full or partial amount received. Payment history is append-only. Issued-invoice balances, settlement, reversals and verification require the secure backend and are not available here.</div>}

@@ -3,6 +3,8 @@ import { browserLocalPersistence, connectAuthEmulator, getAuth, setPersistence }
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { registerLiveFirebase, useFirebaseEmulators } from './firebase-mode'
+import { invoicePreviewMode, invoicePreviewPorts, invoicePreviewProject } from './invoice-preview-mode'
+import { invoiceWorkflowEnabled } from './invoice-release-mode'
 
 function required(name: string, value: string | undefined): string {
   if (!value?.trim()) {
@@ -12,9 +14,11 @@ function required(name: string, value: string | undefined): string {
 }
 
 export const isEmulatorMode = useFirebaseEmulators(import.meta.env.VITE_USE_FIREBASE_EMULATORS)
+export const isInvoiceCandidateMode = invoicePreviewMode(import.meta.env.VITE_INVOICE_CANDIDATE_PREVIEW, import.meta.env.DEV, isEmulatorMode)
+export const isInvoiceWorkflowEnabled = invoiceWorkflowEnabled(import.meta.env.VITE_ENABLE_NUMBERED_INVOICES,isEmulatorMode,isInvoiceCandidateMode)
 const firebaseConfig = isEmulatorMode ? {
-  apiKey: 'demo-emulator-only', authDomain: 'localhost', projectId: 'demo-growthmark-security',
-  storageBucket: 'demo-growthmark-security.firebasestorage.app', messagingSenderId: '000000000000', appId: 'demo-growthmark-web',
+  apiKey: 'demo-emulator-only', authDomain: 'localhost', projectId: isInvoiceCandidateMode ? invoicePreviewProject : 'demo-growthmark-security',
+  storageBucket: `${isInvoiceCandidateMode ? invoicePreviewProject : 'demo-growthmark-security'}.firebasestorage.app`, messagingSenderId: '000000000000', appId: 'demo-growthmark-web',
 } : {
   apiKey: required('VITE_FIREBASE_API_KEY', import.meta.env.VITE_FIREBASE_API_KEY),
   authDomain: required('VITE_FIREBASE_AUTH_DOMAIN', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
@@ -25,7 +29,7 @@ const firebaseConfig = isEmulatorMode ? {
 }
 
 // Isolate development persistence from real-project app instances and sessions.
-const appName = isEmulatorMode ? 'growthmark-local' : 'growthmark-web'
+const appName = isInvoiceCandidateMode ? 'growthmark-invoice-preview' : isEmulatorMode ? 'growthmark-local' : 'growthmark-web'
 const existingApp = getApps().find(app => app.name === appName)
 if (existingApp && Object.entries(firebaseConfig).some(([key, value]) => existingApp.options[key as keyof typeof firebaseConfig] !== value)) {
   throw new Error('Firebase configuration changed. Fully reload the browser to use the selected project.')
@@ -37,8 +41,8 @@ export const db = getFirestore(firebaseApp)
 export const storage = getStorage(firebaseApp)
 
 if (isEmulatorMode && !existingApp) {
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
-  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  connectAuthEmulator(auth, `http://127.0.0.1:${isInvoiceCandidateMode ? invoicePreviewPorts.auth : 9099}`, { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', isInvoiceCandidateMode ? invoicePreviewPorts.firestore : 8080)
 }
 if (!isEmulatorMode) registerLiveFirebase(auth, db)
 // Storage uploads and Analytics remain outside this integration.

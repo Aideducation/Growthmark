@@ -5,6 +5,7 @@ import { doc, serverTimestamp, setLogLevel, writeBatch, Timestamp } from 'fireba
 export const PROJECT = 'demo-growthmark-security-tests'
 export const A = 'freelancer-a'
 export const B = 'freelancer-b'
+let currentEnvironment
 export const oldDate = Timestamp.fromDate(new Date('2025-01-01T00:00:00Z'))
 setLogLevel('silent')
 
@@ -17,12 +18,13 @@ export function requireEmulators() {
 }
 export async function environment() {
   requireEmulators()
-  const rulesFile = process.env.GROWTHMARK_RULES_FILE === 'firestore.agency-invoice.proposed.rules'
-    ? 'firestore.agency-invoice.proposed.rules' : 'firestore.rules'
-  return initializeTestEnvironment({ projectId: PROJECT, firestore: {
+  const rulesFile = ['firestore.agency-invoice.proposed.rules', 'firestore.production.proposed.rules', 'firestore.invoice-read-compatibility.proposed.rules','firestore.release.rules'].includes(process.env.GROWTHMARK_RULES_FILE)
+    ? process.env.GROWTHMARK_RULES_FILE : 'firestore.rules'
+  currentEnvironment=await initializeTestEnvironment({ projectId: PROJECT, firestore: {
     host: '127.0.0.1', port: 8180,
     rules: await readFile(new URL(`../../${rulesFile}`, import.meta.url), 'utf8'),
   } })
+  return currentEnvironment
 }
 export function identity(env, uid, overrides = {}) {
   return env.authenticatedContext(uid, {
@@ -76,8 +78,10 @@ export async function seedWorkspace(db, uid) {
   await setDoc(doc(db, `workspaces/${uid}/clients/client`), client(uid))
   await setDoc(doc(db, `workspaces/${uid}/projects/project`), project(uid))
   const batch = writeBatch(db)
-  for (const kind of ['tasks', 'quotations', 'invoices', 'payments']) batch.set(doc(db, `workspaces/${uid}/${kind}/record`), factories[kind](uid))
+  for (const kind of ['tasks', 'quotations', 'payments',...(process.env.GROWTHMARK_RULES_FILE==='firestore.release.rules'?[]:['invoices'])]) batch.set(doc(db, `workspaces/${uid}/${kind}/record`), factories[kind](uid))
   for (const [name, factory] of Object.entries(settingsFactories)) batch.set(doc(db, `workspaces/${uid}/settings/${name}`), factory(uid))
   await batch.commit()
+  // Existing historical invoices are fixtures, not a bypass for live new creation.
+  if(process.env.GROWTHMARK_RULES_FILE==='firestore.release.rules')await currentEnvironment.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),`workspaces/${uid}/invoices/record`),draft(uid)))
   for (const kind of ['quotations', 'invoices']) await setDoc(doc(db, `workspaces/${uid}/${kind}/record/items/item`), item(uid))
 }

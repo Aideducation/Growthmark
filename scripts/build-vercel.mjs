@@ -4,7 +4,9 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 export function validateDeploymentEnvironment(env) {
-  if (env.VITE_USE_FIREBASE_EMULATORS !== 'false') throw new Error('Deployment blocked: set VITE_USE_FIREBASE_EMULATORS=false explicitly in Vercel.')
+  if (env.VITE_INVOICE_CANDIDATE_PREVIEW && env.VITE_INVOICE_CANDIDATE_PREVIEW !== 'false') throw new Error('Deployment blocked: invoice candidate preview is local development only.')
+  if (env.VITE_USE_FIREBASE_EMULATORS !== 'false') throw new Error('Deployment blocked: set VITE_USE_FIREBASE_EMULATORS=false explicitly in the hosting environment.')
+  if (!['true','false'].includes(env.VITE_ENABLE_NUMBERED_INVOICES)) throw new Error('Deployment blocked: explicitly set VITE_ENABLE_NUMBERED_INVOICES=true, or false for a compatible rollback.')
   const required = ['API_KEY', 'AUTH_DOMAIN', 'PROJECT_ID', 'STORAGE_BUCKET', 'MESSAGING_SENDER_ID', 'APP_ID']
   for (const suffix of required) {
     const key = `VITE_FIREBASE_${suffix}`, value = env[key]?.trim()

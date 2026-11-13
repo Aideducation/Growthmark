@@ -1,9 +1,11 @@
 import { jsPDF } from 'jspdf'
-import { calculateInvoice, validateDraft } from './model.ts'
+import { calculateInvoice } from './model.ts'
+import { resolveInvoiceDraft } from './workflow.ts'
+import type { InvoicePresentation } from './workflow.ts'
 import type { InvoiceDraft } from './model.ts'
 
-export async function createInvoicePdf(input: InvoiceDraft, embeddedFont?: string): Promise<Uint8Array> {
-  const draft = validateDraft(input), totals = calculateInvoice(draft), a = draft.agency
+export async function createInvoicePdf(input: InvoiceDraft, embeddedFont?: string, presentation?: InvoicePresentation): Promise<Uint8Array> {
+  const draft = resolveInvoiceDraft(input, presentation?.paymentOverride), totals = calculateInvoice(draft), a = draft.agency
   let font = embeddedFont
   if (!font) { const response = await fetch('/fonts/NotoSans-Regular.ttf'); if (!response.ok) throw new Error('PDF font unavailable.'); const bytes = new Uint8Array(await response.arrayBuffer()); let binary=''; for(const byte of bytes) binary+=String.fromCharCode(byte); font=btoa(binary) }
   const pdf = new jsPDF({unit:'mm',format:'a4'}); pdf.addFileToVFS('NotoSans.ttf',font);pdf.addFont('NotoSans.ttf','NotoSans','normal');pdf.setFont('NotoSans');pdf.setProperties({title:`Draft invoice — ${draft.title}`,subject:'DRAFT - NOT ISSUED',creator:'GrowthMark'})
@@ -14,6 +16,7 @@ export async function createInvoicePdf(input: InvoiceDraft, embeddedFont?: strin
   function text(value:string,size=10,width=170,x=20){pdf.setFontSize(size);pdf.setTextColor(23,28,27);for(const line of pdf.splitTextToSize(value||' ',width) as string[]){page();pdf.text(line,x,y);y+=size>16?10:6}}
   function image(value:string,x:number,width:number,height:number){if(!value)return;page(height+5);const info=pdf.getImageProperties(value);const scale=Math.min(width/info.width,height/info.height);pdf.addImage(value,'PNG',x,y,info.width*scale,info.height*scale);y+=height+5}
   image(a.logo,20,45,22);text(a.name,22);text('DRAFT INVOICE',15);text('Not issued · no official invoice number · no verified payment status',9)
+  if(presentation?.reference)text(`Reference: ${presentation.reference}`);if(presentation?.manualStatus)text(`Manual status: ${presentation.manualStatus}${presentation.manualStatus==='paid'?' - payment not verified':''}`);
   text(draft.title,13);text(`Invoice date: ${draft.date}    Due date: ${draft.due||'Not set'}`)
   text([a.ownerName,a.address,a.city,a.state,a.postalCode,a.country].filter(Boolean).join(', '));text([a.email,a.phone,a.whatsapp,a.website].filter(Boolean).join(' · '))
   if(a.gstin)text(`GSTIN: ${a.gstin}`);if(a.pan)text(`PAN: ${a.pan}`)
@@ -29,8 +32,8 @@ export async function createInvoicePdf(input: InvoiceDraft, embeddedFont?: strin
   for(let i=1;i<=pdf.getNumberOfPages();i++){pdf.setPage(i);pdf.setFillColor(...brand);pdf.rect(0,0,210,4,'F');pdf.setFontSize(8);pdf.setTextColor(107,114,128);pdf.text(`DRAFT — NOT ISSUED · Page ${i} / ${pdf.getNumberOfPages()} · Private owner export`,20,288)}
   return new Uint8Array(pdf.output('arraybuffer'))
 }
-export async function exportInvoicePdf(draft:InvoiceDraft,print=false){
+export async function exportInvoicePdf(draft:InvoiceDraft,print=false,presentation?:InvoicePresentation){
   // Open synchronously from the click gesture to avoid browser popup blockers during font loading.
   const preview=print?window.open('about:blank','_blank'):null
-  try{const bytes=await createInvoicePdf(draft),url=URL.createObjectURL(new Blob([bytes as BlobPart],{type:'application/pdf'}));if(print){if(!preview)throw new Error('Allow popups to open the printable PDF.');preview.opener=null;preview.location.href=url}else{const link=document.createElement('a');link.href=url;link.download='GrowthMark-Draft-Invoice.pdf';document.body.append(link);link.click();link.remove()}setTimeout(()=>URL.revokeObjectURL(url),600000)}catch(error){preview?.close();throw error}
+  try{const bytes=await createInvoicePdf(draft,undefined,presentation),url=URL.createObjectURL(new Blob([bytes as BlobPart],{type:'application/pdf'}));if(print){if(!preview)throw new Error('Allow popups to open the printable PDF.');preview.opener=null;preview.location.href=url}else{const link=document.createElement('a');link.href=url;link.download='GrowthMark-Draft-Invoice.pdf';document.body.append(link);link.click();link.remove()}setTimeout(()=>URL.revokeObjectURL(url),600000)}catch(error){preview?.close();throw error}
 }

@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_ENABLE_NUMBERED_INVOICES?: string
+  readonly VITE_INVOICE_CANDIDATE_PREVIEW?: string
   readonly VITE_USE_FIREBASE_EMULATORS?: string
   readonly VITE_FIREBASE_API_KEY: string
   readonly VITE_FIREBASE_AUTH_DOMAIN: string

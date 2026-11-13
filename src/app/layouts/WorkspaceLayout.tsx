@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { ThemeToggle } from '../../components/ThemeToggle'
 import { useAuth } from '../../features/auth/auth-context'
 import { navigation, usePage } from '../navigation'
+import { isEmulatorMode } from '../../services/firebase'
 
 export function WorkspaceLayout({ children }: { children: ReactNode }) {
   const { session, signOut } = useAuth()
@@ -60,11 +61,11 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
       <div className="workspace-picker"><span className="workspace-avatar">G</span><div><strong title={businessName}>{businessName}</strong><small>Your private workspace</small></div><Layers3 size={16}/></div>
       <p className="nav-label">WORKSPACE</p>
       <nav className="workspace-nav" aria-label="Workspace pages">{navigation.map(({id,label,icon:Icon}) => <a key={id} className={`nav-item ${page.id === id ? 'active' : ''}`} href={`#${id}`} aria-current={page.id === id ? 'page' : undefined} onClick={() => setMenuOpen(false)}><Icon size={18}/>{label}{page.id === id && <span className="active-dot"/>}</a>)}</nav>
-      <div className="sidebar-note compact-note"><span className="note-icon"><Sparkles size={16}/></span><strong>Your business, organized.</strong><p>Private workspace · Local development</p></div>
+      <div className="sidebar-note compact-note"><span className="note-icon"><Sparkles size={16}/></span><strong>Your business, organized.</strong><p>Private workspace · {isEmulatorMode ? 'Local testing' : 'Your account'}</p></div>
       <div className="sidebar-footer"><span className="workspace-avatar">GM</span><div><strong title={ownerName}>{ownerName}</strong><small>Workspace owner</small></div><PanelLeftClose size={17}/></div>
     </aside>
     <div className="main-shell">
-      <header className="header"><div className="header-location"><button ref={menuButton} aria-controls="workspace-navigation" className="icon-button mobile-menu" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={21}/></button><span className="breadcrumb account-label" title={businessName}>{businessName}</span><ChevronRight size={14}/><strong>{page.title}</strong></div><div className="header-actions"><span className="environment"><span/> Local workspace</span><ThemeToggle/><span className="header-divider"/><span className="profile-avatar" aria-label={ownerName} title={ownerName}>{initials}</span><button type="button" className="icon-button header-logout" aria-label="Sign out" onClick={() => { void signOut().catch(() => {}) }}><LogOut size={17}/><span>Sign out</span></button></div></header>
+      <header className="header"><div className="header-location"><button ref={menuButton} aria-controls="workspace-navigation" className="icon-button mobile-menu" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={21}/></button><span className="breadcrumb account-label" title={businessName}>{businessName}</span><ChevronRight size={14}/><strong>{page.title}</strong></div><div className="header-actions"><span className="environment"><span/> {isEmulatorMode ? 'Local workspace' : 'Private workspace'}</span><ThemeToggle/><span className="header-divider"/><span className="profile-avatar" aria-label={ownerName} title={ownerName}>{initials}</span><button type="button" className="icon-button header-logout" aria-label="Sign out" onClick={() => { void signOut().catch(() => {}) }}><LogOut size={17}/><span>Sign out</span></button></div></header>
       {children}
 
     </div>

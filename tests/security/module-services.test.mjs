@@ -2,9 +2,9 @@ import { before, beforeEach, after, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { initializeApp, deleteApp } from 'firebase/app'
 import { applyActionCode, connectAuthEmulator, getAuth } from 'firebase/auth'
-import { collection, connectFirestoreEmulator, doc, getDoc, getDocs, getFirestore, terminate } from 'firebase/firestore'
+import { collection, connectFirestoreEmulator, doc, getDoc, getDocs, getFirestore, setDoc, terminate, Timestamp } from 'firebase/firestore'
 import { assertFails } from '@firebase/rules-unit-testing'
-import { environment, PROJECT, requireEmulators } from './helpers.mjs'
+import { environment, PROJECT, requireEmulators, meta } from './helpers.mjs'
 import { registerWithEmail, refreshVerification } from '../../src/features/auth/auth-api.ts'
 import { completeOnboarding, readOwnerWorkspace } from '../../src/features/auth/workspace-service.ts'
 import { archiveRecord, saveAccount, saveDraftItem, saveRecord, saveSettings } from '../../src/features/workspace/record-service.ts'
@@ -69,7 +69,9 @@ test('module service: tasks preserve project/client consistency and support comp
 })
 for (const kind of ['quotations', 'invoices']) {
   test(`module service: ${kind} draft head and item CRUD calculate correctly and archive locks changes`, async () => {
-    const id = await saveRecord(a.auth, a.db, kind, values(kind, { clientId: aClient, projectId: aProject, title: 'Draft estimate', issueAt: '2026-01-01', dueAt: '2026-02-01' }))
+    // Historical invoice fixture: generic creation is now closed; quotation creation is unchanged.
+    const id = kind === 'invoices' ? 'legacy-module-invoice' : await saveRecord(a.auth, a.db, kind, values(kind, { clientId: aClient, projectId: aProject, title: 'Draft estimate', issueAt: '2026-01-01', dueAt: '2026-02-01' }))
+    if (kind === 'invoices') await env.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'workspaces', a.auth.currentUser.uid, 'invoices', id), { ...meta(a.auth.currentUser.uid), clientId: aClient, projectId: aProject, title: 'Draft estimate', issueAt: Timestamp.fromDate(new Date('2026-01-01')), dueAt: Timestamp.fromDate(new Date('2026-02-01')), state: 'draft', terms: '', notes: '' }))
     const lineId = await saveDraftItem(a.auth, a.db, kind, id, { description: 'Consulting', quantity: '2.5', price: '100.01', tax: '18', discount: '10' })
     const lineRef = doc(ref(a, kind, id), 'items', lineId), line = (await getDoc(lineRef)).data()
     assert.deepEqual(calculateLine(line), { subtotal: 25003, discount: 2500, tax: 4051, total: 26554 })

@@ -3,10 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "overrides": { "@grpc/grpc-js": "1.14.7" },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:vercel": "node scripts/build-vercel.mjs",
+    "build:cloudflare": "node scripts/build-vercel.mjs",
     "preview": "vite preview",
     "test:security": "node scripts/run-security-tests.mjs",
     "emulators": "node scripts/run-security-tests.mjs --start"
@@ -25,6 +27,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.1.0",
     "firebase-tools": "^15.35.0",
+    "playwright": "^1.65.0",
     "tailwindcss": "^4.1.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.0"

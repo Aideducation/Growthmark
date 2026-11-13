@@ -6,6 +6,7 @@ import { auth, db, isEmulatorMode } from '../../services/firebase'
 import { useAuth } from './auth-context'
 import { friendlyAuthError, loginWithEmail, refreshVerification, registerWithEmail, resendVerification, resetPassword } from './auth-api'
 import { completeOnboarding } from './workspace-service'
+import { provisionWorkspace } from './provision-workspace'
 
 function AuthFrame({ children }: { children: ReactNode }) {
   return <div className="auth-page"><header className="auth-header"><a href="#dashboard" className="auth-brand"><ChartNoAxesCombined aria-hidden="true" size={25}/>GrowthMark</a><ThemeToggle/></header><main className="auth-main"><div className="auth-intro"><p className="eyebrow">YOUR BUSINESS, IN FOCUS</p><h1>More clarity.<br/> More room to grow.</h1><p>A private workspace for your freelance business. Keep your work organized, on your terms.</p><span><ShieldCheck size={18}/> Your workspace belongs to you.</span></div><section className="auth-card surface" aria-label="Account access">{children}</section></main><p className="local-mode-note">{isEmulatorMode ? 'Emulator mode · Accounts and data stay in local Firebase emulators. Emails appear in the emulator terminal.' : `Real Firebase mode · ${auth.app.options.projectId} · Changes are saved to your real account.`}</p></div>
@@ -60,10 +61,10 @@ function Onboarding() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return
     setBusy(true); setError('')
-    try { await completeOnboarding(auth, db, { ownerName, businessName }); refreshSession() }
+    try { if(!isEmulatorMode) await provisionWorkspace(auth,{ownerName,businessName}); await completeOnboarding(auth, db, { ownerName, businessName }); refreshSession() }
     catch (reason) { setError(friendlyAuthError(reason)) } finally { setBusy(false) }
   }
-  return <AuthFrame><span className="auth-step">ONE LAST STEP</span><h2>Make this space yours</h2><p className="auth-description">Tell us a little about your business. Your private workspace is created automatically.</p><Notice error={error}/><form onSubmit={submit} aria-busy={busy}><fieldset disabled={busy} className="auth-fields"><label className="field">Owner name<input className="field-input" autoComplete="name" maxLength={160} value={ownerName} onChange={event => setOwnerName(event.target.value)} required/></label><label className="field">Business or agency name<input className="field-input" autoComplete="organization" maxLength={160} value={businessName} onChange={event => setBusinessName(event.target.value)} required/></label><p className="field-help">Start with INR and Asia/Kolkata time. Business logo uploads will be available in a later phase.</p><Submit busy={busy}>Open my workspace</Submit></fieldset></form><button className="text-button" disabled={busy} onClick={() => { void signOut().catch(() => {}) }}>Sign out</button></AuthFrame>
+  return <AuthFrame><span className="auth-step">ONE LAST STEP</span><h2>Make this space yours</h2><p className="auth-description">Tell us a little about your business. Your private workspace is created automatically.</p><Notice error={error}/><form onSubmit={submit} aria-busy={busy}><fieldset disabled={busy} className="auth-fields"><label className="field">Owner name<input className="field-input" autoComplete="name" maxLength={160} value={ownerName} onChange={event => setOwnerName(event.target.value)} required/></label><label className="field">Business or agency name<input className="field-input" autoComplete="organization" maxLength={160} value={businessName} onChange={event => setBusinessName(event.target.value)} required/></label><p className="field-help">Start with INR and Asia/Kolkata time. Configure your logo and invoice branding in Settings after setup.</p><Submit busy={busy}>Open my workspace</Submit></fieldset></form><button className="text-button" disabled={busy} onClick={() => { void signOut().catch(() => {}) }}>Sign out</button></AuthFrame>
 }
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, refreshSession, signOut } = useAuth()

@@ -45,11 +45,13 @@ function validId(id: string) { if (!id || id.includes('/') || id.length > 150) t
 export async function saveRecord(auth: Auth, db: Firestore, kind: Entity, input: InputValues, id?: string, expectedRevision?: number) {
   if (!(kind in entityFields)) throw new Error('This module cannot be saved.')
   const user = await recordOwner(auth, db), payload = normalize(entityFields[kind], input)
+  if (kind === 'invoices' && !id) throw new Error('Create invoices through the numbered invoice service.')
   if (id) validId(id)
   const ref = id ? doc(db, 'workspaces', user.uid, kind, id) : doc(collection(db, 'workspaces', user.uid, kind))
   await runTransaction(db, async transaction => {
     const workspace = await transaction.get(doc(db, 'workspaces', user.uid))
     const existing = await transaction.get(ref)
+    if (kind === 'invoices' && !existing.exists()) throw new Error('Create invoices through the numbered invoice service.')
     if (auth.currentUser?.uid !== user.uid || workspace.data()?.ownerId !== user.uid) throw new Error('Workspace ownership could not be verified.')
     if (kind === 'payments') {
       payload.currency = workspace.data()?.currency

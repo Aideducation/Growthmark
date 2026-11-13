@@ -62,7 +62,8 @@ for (const [who, uid, other] of [['A', A, B], ['B', B, A]]) {
       const id = kind === 'clients' ? 'client' : kind === 'projects' ? 'project' : 'record'
       await assertSucceeds(getDoc(doc(db, path(uid, kind, id))))
       await assertSucceeds(getDocs(collection(db, `workspaces/${uid}/${kind}`)))
-      await assertSucceeds(setDoc(doc(db, path(uid, kind, 'new')), factories[kind](uid)))
+      if(kind==='invoices'&&process.env.GROWTHMARK_RULES_FILE==='firestore.release.rules')await assertFails(setDoc(doc(db,path(uid,kind,'new')),factories[kind](uid)))
+      else await assertSucceeds(setDoc(doc(db, path(uid, kind, 'new')), factories[kind](uid)))
       await assertFails(getDoc(doc(db, path(other, kind, id))))
       await assertFails(getDocs(collection(db, `workspaces/${other}/${kind}`)))
       await assertFails(setDoc(doc(db, path(other, kind, 'intrusion')), factories[kind](other)))
